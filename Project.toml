@@ -1,0 +1,14 @@
+name = "DocTools"
+uuid = "f6acdd4c-f2c6-4daa-abc6-3846b16bd159"
+authors = ["PlantingSpace"]
+version = "0.1.0"
+
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+PlutoSliderServer = "2fc8631c-6f24-4c5b-bca7-cbb509c42db4"
+
+[compat]
+PlutoSliderServer = "0.3"
+julia = "1.6"
