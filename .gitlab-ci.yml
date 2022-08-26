@@ -1,0 +1,48 @@
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+
+variables:
+  REGISTRY_ID: "262915957105"
+  AWS_REGION: "eu-central-1"
+  CICD_ECR: "$REGISTRY_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+
+pages:
+  image: $CICD_ECR/julia-tooling:latest
+  stage: deploy
+  script:
+    - |
+      julia --project=docs --color=yes -e '
+        using Pkg
+        Pkg.develop(PackageSpec(path=pwd()))
+        Pkg.instantiate()
+        include("docs/make.jl")'
+    - mkdir -p public
+    - mv docs/build/* public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+
+pages review:
+  image: $CICD_ECR/julia-tooling:latest
+  stage: test
+  script:
+    - |
+      julia --project=docs --color=yes -e '
+        using Pkg
+        Pkg.develop(PackageSpec(path=pwd()))
+        include("docs/make.jl")'
+    - mkdir -p public
+    - mv docs/build/* public
+  artifacts:
+    paths:
+      - public
+  environment:
+    name: "review/$CI_COMMIT_REF_SLUG"
+    url: "https://plantingspace.gitlab.io/-/devops/doctools/-/jobs/$CI_JOB_ID/artifacts/public/index.html"
+  only:
+    - merge_requests
