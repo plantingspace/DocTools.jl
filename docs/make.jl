@@ -12,7 +12,7 @@ default_makedocs(;
     sitename="Doctools.jl",
     modules=[DocTools],
     authors="PlantingSpace",
-    repo="https://github.com/plantingspace/devops/doctools/-/blob/{commit}{path}#{line}",
+    repo="https://github.com/plantingspace/doctools/-/blob/{commit}{path}#{line}",
     macros=Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
     notebooks=[pluto_pages; literate_pages],
     pages=["Home" => "index.md"],
