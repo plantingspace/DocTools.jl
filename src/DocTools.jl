@@ -104,7 +104,7 @@ function default_makedocs(;
    strict::Bool=true,
    prettify::Bool=is_masterCI(),
    notebooks::AbstractVector{<:String}=[],
-   pages::AbstractVector{<:Pair{String,String}}=[],
+   pages::AbstractVector{<:Pair{String,<:Any}}=[],
    kwargs...
     )
     mathengine = Documenter.MathJax2(Dict(:TeX => Dict(:Macros => macros)))
