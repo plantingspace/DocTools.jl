@@ -41,7 +41,7 @@ function build_pluto(
     exclude_list::AbstractVector{<:String}=String[],
     )
     run || return String[]
-    # Create folder if they do not exist already
+    # Create folders if they do not exist already
     mkpath(md_dir)
     mkpath(html_dir)
     notebooks_dir = joinpath(pkgdir(pkg), notebooks_path)
@@ -100,11 +100,11 @@ written as `:bf => ["\\bf{#1}", 1]`.
 - `pages`: The usual `pages` argument from `makedocs`
 """
 function default_makedocs(;
-   macros::Dict{Symbol,<:AbstractVector}=Dict(),
+   macros::Dict{Symbol,<:AbstractVector}=Dict{Symbol,Vector}(),
    strict::Bool=true,
    prettify::Bool=is_masterCI(),
-   notebooks::AbstractVector{<:String}=[],
-   pages::AbstractVector{<:Pair{String,<:Any}}=[],
+   notebooks::AbstractVector{<:String}=String[],
+   pages::AbstractVector{<:Pair{String,<:Any}}=Pair{String,Any}[],
    kwargs...
     )
     mathengine = Documenter.MathJax2(Dict(:TeX => Dict(:Macros => macros)))
