@@ -21,7 +21,7 @@ in an iframe.
 It returns the list of the paths of the created markdown pages.
 
 ## Arguments
-- `pkg`: The module that contains the notebook directory.
+- `pkg/root`: The module containing the docs or the absolute path of the directory root.
 - `notebooks_path`: The relative path of the notebooks relative to the root of the module.
 
 ## Keyword Arguments
@@ -32,10 +32,10 @@ It returns the list of the paths of the created markdown pages.
 - `exclude_list`: Array of files to exclude from the rendering.
 """
 function build_pluto(
-    pkg::Module,
+    root::String,
     notebooks_path::String;
     run::Bool=true, # This is currently always true
-    src_dir::String=joinpath(pkgdir(pkg), "docs", "src"),
+    src_dir::String=joinpath(root, "docs", "src"),
     md_dir::String=joinpath(src_dir, "notebooks"),
     html_dir::String=joinpath(src_dir, "assets", "notebooks"),
     exclude_list::AbstractVector{<:String}=String[],
@@ -44,7 +44,7 @@ function build_pluto(
     # Create folders if they do not exist already
     mkpath(md_dir)
     mkpath(html_dir)
-    notebooks_dir = joinpath(pkgdir(pkg), notebooks_path)
+    notebooks_dir = joinpath(root, notebooks_path)
     # PlutoSliderServer automatically detect which files are Pluto notebooks,
     # we just give it a directory to explore.
     # But first we preinstantiate the workbench directory.
@@ -61,11 +61,15 @@ function build_pluto(
     build_notebook_md(md_dir, html_dir)
 end
 
+function build_pluto(pkg::Module, notebooks_path::String; kwargs...)
+    build_pluto(pkgdir(pkg), notebooks_path; kwargs...)
+end
+
 """
 Builds notebooks using the literate format and returns the list of the output files.
 
 ## Arguments
-- `pkg`: The module that contains the notebook directory.
+- `pkg/root`: The module containing the docs or the absolute path of the directory root.
 - `literate_path`: The relative path of the notebooks relative to the root of the module.
 
 ## Keyword Arguments
@@ -74,16 +78,20 @@ Builds notebooks using the literate format and returns the list of the output fi
 - `md_dir`: The output directory for the Markdown files (default is "docs/src/notebooks").
 """
 function build_literate(
-    pkg::Module,
+    root::String,
     literate_path::String;
     run::Bool=true,
-    src_dir::String=joinpath(pkgdir(pkg), "docs", "src"),
+    src_dir::String=joinpath(root, "docs", "src"),
     md_dir::String=joinpath(src_dir, "notebooks"),
 )
     run || return String[]
-    map(filter!(endswith(".jl"), readdir(joinpath(pkgdir(pkg), literate_path); join=true))) do file
+    map(filter!(endswith(".jl"), readdir(joinpath(root, literate_path); join=true))) do file
         Literate.markdown(file, md_dir; flavor=Literate.DocumenterFlavor())
     end
+end
+
+function build_literate(pkg::Module, literate_path::String; kwargs...)
+    build_literate(pkgdir(pkg), literate_path; kwargs...)
 end
 
 """
