@@ -1,8 +1,4 @@
-using Pkg
-Pkg.develop(path=normpath(joinpath(@__DIR__, "..")))
-
 using DocTools
-using Documenter
 
 pluto_pages = build_pluto(DocTools, "pluto_notebooks")
 
@@ -16,5 +12,4 @@ default_makedocs(;
     macros=Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
     notebooks=[pluto_pages; literate_pages],
     pages=["Home" => "index.md"],
-    editlink="main",
 )

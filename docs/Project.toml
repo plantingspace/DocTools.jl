@@ -1,4 +1,2 @@
 [deps]
 DocTools = "f6acdd4c-f2c6-4daa-abc6-3846b16bd159"
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
