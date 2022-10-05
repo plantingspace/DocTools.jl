@@ -43,6 +43,6 @@ pages review:
       - public
   environment:
     name: "review/$CI_COMMIT_REF_SLUG"
-    url: "https://plantingspace.gitlab.io/-/devops/doctools/-/jobs/$CI_JOB_ID/artifacts/public/index.html"
+    url: "https://plantingspace.gitlab.io/-/doctools/-/jobs/$CI_JOB_ID/artifacts/public/index.html"
   only:
     - merge_requests

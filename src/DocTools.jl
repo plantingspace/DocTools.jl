@@ -48,17 +48,21 @@ function build_pluto(
     # PlutoSliderServer automatically detect which files are Pluto notebooks,
     # we just give it a directory to explore.
     # But first we preinstantiate the workbench directory.
-    Pkg.activate(notebooks_dir)
-    Pkg.instantiate()
-
-    PlutoSliderServer.export_directory(
-        notebooks_dir;
-        Export_create_index = false,
-        Export_output_dir = html_dir,
-        Export_exclude = exclude_list,
-        on_ready = check_for_failed_notebooks,
-    )
-    build_notebook_md(md_dir, html_dir)
+    curr_env = dirname(Pkg.project().path)
+    try
+        Pkg.activate(notebooks_dir)
+        Pkg.instantiate()
+        PlutoSliderServer.export_directory(
+            notebooks_dir;
+            Export_create_index = false,
+            Export_output_dir = html_dir,
+            Export_exclude = exclude_list,
+            on_ready = check_for_failed_notebooks,
+        )
+        build_notebook_md(md_dir, html_dir)
+    finally
+        Pkg.activate(curr_env)
+    end
 end
 
 function build_pluto(pkg::Module, notebooks_path::String; kwargs...)
@@ -85,8 +89,16 @@ function build_literate(
     md_dir::String=joinpath(src_dir, "notebooks"),
 )
     run || return String[]
-    map(filter!(endswith(".jl"), readdir(joinpath(root, literate_path); join=true))) do file
-        Literate.markdown(file, md_dir; flavor=Literate.DocumenterFlavor())
+    curr_env = dirname(Pkg.project().path)
+    try
+        literate_folder = joinpath(root, literate_path)
+        Pkg.activate(literate_folder)
+        Pkg.instantiate()
+        map(filter!(endswith(".jl"), readdir(literate_folder; join=true))) do file
+            Literate.markdown(file, md_dir; flavor=Literate.DocumenterFlavor(), execute=true)
+        end
+    finally
+        Pkg.activate(curr_env)
     end
 end
 
