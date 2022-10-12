@@ -41,10 +41,11 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
   # encapsulate the html file. This should be seen as a workaround
   path_to_html = joinpath(ismaster ? ".." : "", relpath(html_dir, md_outdir))
   mapreduce(vcat, walkdir(html_dir)) do (path, _, files)
-    filter!(endswith(".html"), files)
-    md_subpath = path == html_dir ? md_outdir : joinpath(md_outdir, relpath(path, html_dir))
-    mkpath(md_subpath)
-    map(files) do f
+    subpath = relpath(path, html_dir) # The subfolder structure
+    depth = subpath == "." ? 0 : length(splitpath(subpath)) # We need the depth to get the relative path of subfolder notebooks.
+    md_subpath = normpath(joinpath(md_outdir, subpath)) # The output folder for the md file
+    mkpath(md_subpath) # Build the dir when needed
+    map(filter!(endswith(".html"), files)) do f
       file_path = joinpath(md_subpath, strip_extension(f) * ".md")
       open(file_path, "w") do io
         # Fake an inside HTML page in documenter.
@@ -54,7 +55,7 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
 
 ```@raw html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.2/iframeResizer.min.js" integrity="sha512-dnvR4Aebv5bAtJxDunq3eE8puKAJrY9GBJYl9GC6lTOEC76s1dbDfJFcL9GyzpaDW4vlI/UjR8sKbc1j6Ynx6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<iframe id="pluto_notebook" width="100%" title="Pluto Notebook" src="$(joinpath(path_to_html, f))"></iframe>
+<iframe id="pluto_notebook" width="100%" title="Pluto Notebook" src="$(normpath(joinpath(fill("..", depth)..., path_to_html, subpath, f)))"></iframe>
 <script>
   document.addEventListener('DOMContentLoaded', function(){
     var myIframe = document.getElementById("pluto_notebook");
