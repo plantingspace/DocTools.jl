@@ -40,13 +40,17 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
   # For each html file produced, make a .md file for Documenter which will 
   # encapsulate the html file. This should be seen as a workaround
   path_to_html = joinpath(ismaster ? ".." : "", relpath(html_dir, md_outdir))
-  map(filter!(endswith(".html"), readdir(html_dir))) do f
-    file_path = joinpath(md_outdir, strip_extension(f) * ".md")
-    open(file_path, "w") do io
-      # Fake an inside HTML page in documenter.
-      write(
-        io,
-        """# $(strip_extension(f))
+  mapreduce(vcat, walkdir(html_dir)) do (path, _, files)
+    filter!(endswith(".html"), files)
+    md_subpath = path == html_dir ? md_outdir : joinpath(md_outdir, relpath(path, html_dir))
+    mkpath(md_subpath)
+    map(files) do f
+      file_path = joinpath(md_subpath, strip_extension(f) * ".md")
+      open(file_path, "w") do io
+        # Fake an inside HTML page in documenter.
+        write(
+          io,
+          """# $(strip_extension(f))
 
 ```@raw html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.2/iframeResizer.min.js" integrity="sha512-dnvR4Aebv5bAtJxDunq3eE8puKAJrY9GBJYl9GC6lTOEC76s1dbDfJFcL9GyzpaDW4vlI/UjR8sKbc1j6Ynx6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -59,8 +63,9 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
 </script>
 ```
 """,
-      )
-    end
+        )
+      end
     file_path
+  end
   end
 end

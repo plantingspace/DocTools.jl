@@ -30,6 +30,7 @@ It returns the list of the paths of the created markdown pages.
 - `md_dir`: The output directory for the Markdown files (default is "docs/src/notebooks").
 - `html_dir`: The output directory for the HTML files (default is "docs/src/assets/notebooks").
 - `exclude_list`: Array of files to exclude from the rendering.
+- `recursive`: Also treats the subfolder (and return the same structure).
 """
 function build_pluto(
     root::String,
@@ -39,12 +40,14 @@ function build_pluto(
     md_dir::String=joinpath(src_dir, "notebooks"),
     html_dir::String=joinpath(src_dir, "assets", "notebooks"),
     exclude_list::AbstractVector{<:String}=String[],
+    recursive::Bool=true,
     )
     run || return String[]
     # Create folders if they do not exist already
     mkpath(md_dir)
     mkpath(html_dir)
     notebooks_dir = joinpath(root, notebooks_path)
+    notebook_paths = recursive ? PlutoSliderServer.find_notebook_files_recursive(notebooks_dir) : filter(PlutoSliderServer.Pluto.is_pluto_notebook, readdir(notebooks_dir, join=true))
     # PlutoSliderServer automatically detect which files are Pluto notebooks,
     # we just give it a directory to explore.
     # But first we preinstantiate the workbench directory.
@@ -58,6 +61,7 @@ function build_pluto(
             Export_output_dir = html_dir,
             Export_exclude = exclude_list,
             on_ready = check_for_failed_notebooks,
+            notebook_paths
         )
         build_notebook_md(md_dir, html_dir)
     finally
@@ -87,15 +91,20 @@ function build_literate(
     run::Bool=true,
     src_dir::String=joinpath(root, "docs", "src"),
     md_dir::String=joinpath(src_dir, "notebooks"),
+    recursive::Bool=true,
 )
     run || return String[]
     curr_env = dirname(Pkg.project().path)
+    dir_parser = recursive ? walkdir : list_dir
     try
         literate_folder = joinpath(root, literate_path)
         Pkg.activate(literate_folder)
         Pkg.instantiate()
-        map(filter!(endswith(".jl"), readdir(literate_folder; join=true))) do file
-            Literate.markdown(file, md_dir; flavor=Literate.DocumenterFlavor(), execute=true)
+        mapreduce(vcat, dir_parser(literate_folder)) do (path, _, _)
+            md_subpath = path == literate_folder ? md_dir : joinpath(md_dir, relpath(path, literate_folder))
+            map(filter!(endswith(".jl"), readdir(path; join=true))) do file
+                Literate.markdown(file, md_subpath; flavor=Literate.DocumenterFlavor(), execute=true)
+            end
         end
     finally
         Pkg.activate(curr_env)
@@ -104,6 +113,10 @@ end
 
 function build_literate(pkg::Module, literate_path::String; kwargs...)
     build_literate(pkgdir(pkg), literate_path; kwargs...)
+end
+
+function list_dir(path::String)
+    ((path, String[], String[]),)
 end
 
 """
@@ -124,6 +137,7 @@ function default_makedocs(;
    strict::Bool=true,
    prettify::Bool=is_masterCI(),
    notebooks::AbstractVector{<:String}=String[],
+   notebook_path::String="notebooks",
    pages::AbstractVector{<:Pair{String,<:Any}}=Pair{String,Any}[],
    kwargs...
     )
@@ -131,7 +145,7 @@ function default_makedocs(;
     notebook_pages = if isempty(notebooks)
         []
     else
-        "Notebooks" => joinpath.(Ref("notebooks"), basename.(notebooks))
+        "Notebooks" => rework_paths(notebooks, notebook_path)
     end
     makedocs(;
         strict,
@@ -139,6 +153,40 @@ function default_makedocs(;
         pages=[pages; notebook_pages],
         kwargs...
     )
+end
+
+function rework_paths(paths::AbstractVector{<:String}, notebook_path::String)
+    top_dir = Dict()
+    map(paths) do f
+        dirs_file = splitpath(f)
+        filename = last(dirs_file)
+        pos = findfirst(==(notebook_path), dirs_file)
+        isnothing(pos) && error("$(notebook_path) could not be found in the path $(f)")
+        dirs = dirs_file[pos+1:end-1]
+        i = 1
+        d = top_dir
+        while true
+            iter = iterate(dirs, i)
+            if isnothing(iter)
+                push!(get!(Vector{String}, d, "files"), joinpath(dirs_file[pos:end]...))
+                return
+            else
+                d = get!(Dict, d, first(iter))
+            end
+            i += 1
+        end
+    end
+    dict_to_pairs(top_dir)
+end
+
+function dict_to_pairs(d::Dict)
+    mapreduce(vcat, pairs(d)) do (key, val)
+        if key == "files"
+            val
+        else
+            key => dict_to_pairs(val)
+        end
+    end
 end
 
 end
