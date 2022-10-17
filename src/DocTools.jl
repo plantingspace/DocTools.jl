@@ -1,6 +1,8 @@
 module DocTools
 
+using Dates
 using Documenter
+using Git: git
 using Literate
 using Pkg
 using PlutoSliderServer
@@ -63,7 +65,7 @@ function build_pluto(
             on_ready = check_for_failed_notebooks,
             notebook_paths
         )
-        build_notebook_md(md_dir, html_dir)
+        build_notebook_md(md_dir, html_dir, notebooks_dir)
     finally
         Pkg.activate(curr_env)
     end
@@ -103,7 +105,8 @@ function build_literate(
         mapreduce(vcat, dir_parser(literate_folder)) do (path, _, _)
             md_subpath = path == literate_folder ? md_dir : joinpath(md_dir, relpath(path, literate_folder))
             map(filter!(endswith(".jl"), readdir(path; join=true))) do file
-                Literate.markdown(file, md_subpath; flavor=Literate.DocumenterFlavor(), execute=true)
+                author, date = get_last_author_date(file)
+                Literate.markdown(file, md_subpath; flavor=Literate.DocumenterFlavor(), execute=true, postprocess=add_author_data(author, date))::String
             end
         end
     finally
@@ -117,6 +120,19 @@ end
 
 function list_dir(path::String)
     ((path, String[], String[]),)
+end
+
+function get_last_author_date(file::String)
+    author, date = readlines(git(["log", "-n 1", "--pretty=format:%an (%ae)\n%as", "--", file]))
+    date = Date(date)
+    author, "$(monthname(date)) $(day(date)), $(year(date))"
+end
+
+function add_author_data(author, date)
+    function process_str(str)
+        "!!! info\n" *
+        "    This file was last modified on $(date), by $(author).\n\n" * str
+    end
 end
 
 """
@@ -136,7 +152,7 @@ function default_makedocs(;
    macros::Dict{Symbol,<:AbstractVector}=Dict{Symbol,Vector}(),
    strict::Bool=true,
    prettify::Bool=is_masterCI(),
-   notebooks::AbstractVector{<:String}=String[],
+   notebooks::AbstractVector=String[],
    notebook_path::String="notebooks",
    pages::AbstractVector{<:Pair{String,<:Any}}=Pair{String,Any}[],
    kwargs...

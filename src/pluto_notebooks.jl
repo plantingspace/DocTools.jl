@@ -35,7 +35,7 @@ Based on a list of html pages (built from PlutoSliderServer), create markdown
 files compatible with Documenter.jl encapsulating the notebooks into an
 <iframe>
 """
-function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, ismaster::Bool=is_masterCI())
+function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, jl_dir::AbstractString, ismaster::Bool=is_masterCI())
   mkpath(md_outdir) # create directory if not existing
   # For each html file produced, make a .md file for Documenter which will 
   # encapsulate the html file. This should be seen as a workaround
@@ -46,6 +46,7 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
     md_subpath = normpath(joinpath(md_outdir, subpath)) # The output folder for the md file
     mkpath(md_subpath) # Build the dir when needed
     map(filter!(endswith(".html"), files)) do f
+      author, date = get_last_author_date(normpath(joinpath(jl_dir, subpath, strip_extension(f) * ".jl")))
       file_path = joinpath(md_subpath, strip_extension(f) * ".md")
       open(file_path, "w") do io
         # Fake an inside HTML page in documenter.
@@ -63,7 +64,7 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
 });
 </script>
 ```
-""",
+""" |> add_author_data(author, date),
         )
       end
     file_path
