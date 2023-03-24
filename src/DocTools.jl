@@ -33,6 +33,7 @@ It returns the list of the paths of the created markdown pages.
 - `html_dir`: The output directory for the HTML files (default is "docs/src/assets/notebooks").
 - `exclude_list`: Array of files to exclude from the rendering.
 - `recursive`: Also treats the subfolder (and return the same structure).
+- `activate_folder`: Activate the environment of the folder containing the notebooks.
 """
 function build_pluto(
     root::String,
@@ -43,6 +44,7 @@ function build_pluto(
     html_dir::String=joinpath(src_dir, "assets", "notebooks"),
     exclude_list::AbstractVector{<:String}=String[],
     recursive::Bool=true,
+    activate_folder::Bool=true,
     )
     run || return String[]
     # Create folders if they do not exist already
@@ -55,8 +57,10 @@ function build_pluto(
     # But first we preinstantiate the workbench directory.
     curr_env = dirname(Pkg.project().path)
     try
-        Pkg.activate(notebooks_dir)
-        Pkg.instantiate()
+        if activate_folder
+            Pkg.activate(notebooks_dir)
+            Pkg.instantiate()
+        end
         PlutoSliderServer.export_directory(
             notebooks_dir;
             Export_create_index = false,
@@ -67,7 +71,9 @@ function build_pluto(
         )
         build_notebook_md(md_dir, html_dir, notebooks_dir)
     finally
-        Pkg.activate(curr_env)
+        if activate_folder
+            Pkg.activate(curr_env)
+        end
     end
 end
 
@@ -86,6 +92,7 @@ Builds notebooks using the literate format and returns the list of the output fi
 - `run`: Whether to run the notebooks or not.
 - `src_dir`: The source directory of the docs (default is "docs/src").
 - `md_dir`: The output directory for the Markdown files (default is "docs/src/notebooks").
+- `activate_folder`: Whether to activate the environment of the folder containing the notebooks.
 """
 function build_literate(
     root::String,
@@ -94,14 +101,17 @@ function build_literate(
     src_dir::String=joinpath(root, "docs", "src"),
     md_dir::String=joinpath(src_dir, "notebooks"),
     recursive::Bool=true,
+    activate_folder::Bool=true,
 )
     run || return String[]
     curr_env = dirname(Pkg.project().path)
     dir_parser = recursive ? walkdir : list_dir
     try
         literate_folder = joinpath(root, literate_path)
-        Pkg.activate(literate_folder)
-        Pkg.instantiate()
+        if activate_folder
+            Pkg.activate(literate_folder)
+            Pkg.instantiate()
+        end
         mapreduce(vcat, dir_parser(literate_folder)) do (path, _, _)
             md_subpath = path == literate_folder ? md_dir : joinpath(md_dir, relpath(path, literate_folder))
             map(filter!(endswith(".jl"), readdir(path; join=true))) do file
@@ -110,7 +120,9 @@ function build_literate(
             end
         end
     finally
-        Pkg.activate(curr_env)
+        if activate_folder
+            Pkg.activate(curr_env)
+        end
     end
 end
 
