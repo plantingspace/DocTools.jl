@@ -1,5 +1,7 @@
 # # Literate Title 
 using Distributions
+# Using parent package
+using DocTools
 # Try something from Distributions.jl
 rand(Exponential())
 #

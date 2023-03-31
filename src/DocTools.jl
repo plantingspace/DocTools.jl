@@ -9,6 +9,7 @@ using PlutoSliderServer
 
 export build_pluto, build_literate, default_makedocs, is_masterCI
 
+include("smart_filters.jl")
 include("pluto_notebooks.jl")
 
 "Remove the last extension from a filename, e.g. `index.html` -> `index`"
@@ -36,8 +37,9 @@ It returns the list of the paths of the created markdown pages.
 - `activate_folder`: Activate the environment of the folder containing the notebooks.
 """
 function build_pluto(
-    root::String,
-    notebooks_path::String;
+    mod::Module,
+    notebooks_dir::String,
+    root::String=pkgdir(mod);
     run::Bool=true, # This is currently always true
     src_dir::String=joinpath(root, "docs", "src"),
     md_dir::String=joinpath(src_dir, "notebooks"),
@@ -45,13 +47,23 @@ function build_pluto(
     exclude_list::AbstractVector{<:String}=String[],
     recursive::Bool=true,
     activate_folder::Bool=true,
+    smart_filter::Bool=true,
     )
     run || return String[]
     # Create folders if they do not exist already
     mkpath(md_dir)
     mkpath(html_dir)
-    notebooks_dir = joinpath(root, notebooks_path)
-    notebook_paths = recursive ? PlutoSliderServer.find_notebook_files_recursive(notebooks_dir) : filter(PlutoSliderServer.Pluto.is_pluto_notebook, readdir(notebooks_dir, join=true))
+    notebooks_path = joinpath(root, notebooks_dir) # Path to the notebook directory
+    notebook_paths = recursive ? PlutoSliderServer.find_notebook_files_recursive(notebooks_path) : filter(PlutoSliderServer.Pluto.is_pluto_notebook, readdir(notebooks_path, join=true)) # Paths to each notebook
+    modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), list_modified()))
+    if !is_masterCI() && smart_filter
+        foreach(notebook_paths) do path
+            if path ∉ modified_notebooks && !is_pkg_dependent(joinpath(notebooks_path, path), repr(mod))
+                @info "Skipping notebook $path"
+                push!(exclude_list, path)
+            end
+        end
+    end
     # PlutoSliderServer automatically detect which files are Pluto notebooks,
     # we just give it a directory to explore.
     # But first we preinstantiate the workbench directory.
@@ -77,10 +89,6 @@ function build_pluto(
     end
 end
 
-function build_pluto(pkg::Module, notebooks_path::String; kwargs...)
-    build_pluto(pkgdir(pkg), notebooks_path; kwargs...)
-end
-
 """
 Builds notebooks using the literate format and returns the list of the output files.
 
@@ -95,17 +103,21 @@ Builds notebooks using the literate format and returns the list of the output fi
 - `activate_folder`: Whether to activate the environment of the folder containing the notebooks.
 """
 function build_literate(
-    root::String,
-    literate_path::String;
+    mod::Module,
+    literate_path::String,
+    root::String=pkgdir(mod);
     run::Bool=true,
     src_dir::String=joinpath(root, "docs", "src"),
     md_dir::String=joinpath(src_dir, "notebooks"),
+    exclude_list::AbstractVector{<:String}=String[],
     recursive::Bool=true,
     activate_folder::Bool=true,
+    smart_filter::Bool=true,
 )
     run || return String[]
     curr_env = dirname(Pkg.project().path)
     dir_parser = recursive ? walkdir : list_dir
+    modified_files = joinpath.(root, filter!(startswith(literate_path), list_modified())) # Get list of modified files in the `literate_path` dir. 
     try
         literate_folder = joinpath(root, literate_path)
         if activate_folder
@@ -114,7 +126,17 @@ function build_literate(
         end
         mapreduce(vcat, dir_parser(literate_folder)) do (path, _, _)
             md_subpath = path == literate_folder ? md_dir : joinpath(md_dir, relpath(path, literate_folder))
-            map(filter!(endswith(".jl"), readdir(path; join=true))) do file
+            filtered_list = filter!(readdir(path; join=true)) do file
+                out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
+                if smart_filter
+                    out &= is_masterCI() || file ∈ modified_files || is_pkg_dependent(file, repr(mod))
+                    if !out && endswith(file, ".jl")
+                        @info "Skipping literate file $file"
+                    end
+                end
+                out
+            end
+            map(filtered_list) do file
                 author, date = get_last_author_date(file)
                 Literate.markdown(file, md_subpath; flavor=Literate.DocumenterFlavor(), execute=true, postprocess=add_author_data(author, date))::String
             end
@@ -124,10 +146,6 @@ function build_literate(
             Pkg.activate(curr_env)
         end
     end
-end
-
-function build_literate(pkg::Module, literate_path::String; kwargs...)
-    build_literate(pkgdir(pkg), literate_path; kwargs...)
 end
 
 function list_dir(path::String)
