@@ -202,22 +202,21 @@ function default_makedocs(;
 end
 
 function rework_paths(paths::AbstractVector{<:String}, notebook_path::String)
-    top_dir = Dict()
+    top_dir = Dict{String,Any}()
     map(paths) do f
         dirs_file = splitpath(f)
-        filename = last(dirs_file)
         pos = findfirst(==(notebook_path), dirs_file)
         isnothing(pos) && error("$(notebook_path) could not be found in the path $(f)")
-        dirs = dirs_file[pos+1:end-1]
+        sub_dirs = dirs_file[pos+1:end-1] # Get the relpath of the file
         i = 1
-        d = top_dir
+        d = top_dir # We start at the root
         while true
-            iter = iterate(dirs, i)
+            iter = iterate(sub_dirs, i)
             if isnothing(iter)
                 push!(get!(Vector{String}, d, "files"), joinpath(dirs_file[pos:end]...))
                 return
             else
-                d = get!(Dict, d, first(iter))
+                d = get!(Dict{String,Any}, d, first(iter)) # Create a new dict for a dir if it doesn't exist
             end
             i += 1
         end
@@ -230,7 +229,7 @@ function dict_to_pairs(d::Dict)
         if key == "files"
             val
         else
-            key => dict_to_pairs(val)
+            [key => dict_to_pairs(val)]
         end
     end
 end

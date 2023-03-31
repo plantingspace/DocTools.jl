@@ -13,7 +13,6 @@ pages:
   image: $CICD_ECR/julia-tooling:latest
   stage: deploy
   script:
-    - git fetch
     - |
       julia --project=docs --color=yes -e '
         using Pkg
@@ -32,7 +31,6 @@ pages review:
   image: $CICD_ECR/julia-tooling:latest
   stage: test
   script:
-    - git fetch
     - |
       julia --project=docs --color=yes -e '
         using Pkg
