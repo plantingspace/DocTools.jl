@@ -131,10 +131,8 @@ uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.9.1"
 
 [[deps.DocTools]]
-deps = ["Dates", "Documenter", "Git", "LibGit2", "Literate", "Pkg", "PlutoSliderServer"]
-git-tree-sha1 = "e2a3d1d2d8b7f00efb0c0075a6f4c25557af31ce"
-repo-rev = "tgf/smartfilter"
-repo-url = ".."
+deps = ["Dates", "Documenter", "Git", "Literate", "Pkg", "PlutoSliderServer"]
+path = ".."
 uuid = "f6acdd4c-f2c6-4daa-abc6-3846b16bd159"
 version = "0.1.0"
 

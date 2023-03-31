@@ -1,4 +1,5 @@
 function list_modified(target::String="main")
+    run(git(["fetch", "origin", target])) # We need to fetch the origin to get the latest changes.
     readlines(git(["diff", "--name-only", "HEAD", "origin/" * target]))
 end
 
