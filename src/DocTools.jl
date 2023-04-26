@@ -6,6 +6,7 @@ using Git: git
 using Literate
 using Pkg
 using PlutoSliderServer
+using PlutoSliderServer.Pluto: is_pluto_notebook
 
 export build_pluto, build_literate, default_makedocs, is_masterCI
 
@@ -53,8 +54,14 @@ function build_pluto(
     # Create folders if they do not exist already
     mkpath(md_dir)
     mkpath(html_dir)
-    notebooks_path = joinpath(root, notebooks_dir) # Path to the notebook directory
-    notebook_paths = recursive ? PlutoSliderServer.find_notebook_files_recursive(notebooks_path) : filter(PlutoSliderServer.Pluto.is_pluto_notebook, readdir(notebooks_path, join=true)) # Paths to each notebook
+    # Path to the notebook directory.
+    notebooks_path = joinpath(root, notebooks_dir)
+    # Paths to each notebook, relative to notebook directory.
+    notebook_paths = if recursive
+        PlutoSliderServer.find_notebook_files_recursive(notebooks_dir)
+    else
+        String[file for file in readdir(notebooks_dir, sort=false) if is_pluto_notebook(joinpath(notebooks_dir, file))]
+    end
     modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), list_modified()))
     if !is_masterCI() && smart_filter
         foreach(notebook_paths) do path
