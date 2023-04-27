@@ -26,7 +26,7 @@ It returns the list of the paths of the created markdown pages.
 
 ## Arguments
 - `pkg/root`: The module containing the docs or the absolute path of the directory root.
-- `notebooks_path`: The relative path of the notebooks relative to the root of the module.
+- `notebooks_path`: The path of the notebooks. If this is a relative path, it will be taken as relative to the root of the module.
 
 ## Keyword Arguments
 - `run`: Whether to run the notebooks or not.
@@ -51,21 +51,20 @@ function build_pluto(
     smart_filter::Bool=true,
     )
     run || return String[]
+    !isabspath(notebooks_dir) && (notebooks_dir = joinpath(root, notebooks_dir))
     # Create folders if they do not exist already
     mkpath(md_dir)
     mkpath(html_dir)
-    # Path to the notebook directory.
-    notebooks_path = joinpath(root, notebooks_dir)
     # Paths to each notebook, relative to notebook directory.
     notebook_paths = if recursive
-        PlutoSliderServer.find_notebook_files_recursive(notebooks_dir)
+        sort(PlutoSliderServer.find_notebook_files_recursive(notebooks_dir))
     else
-        String[file for file in readdir(notebooks_dir, sort=false) if is_pluto_notebook(joinpath(notebooks_dir, file))]
+        String[file for file in readdir(notebooks_dir) if is_pluto_notebook(joinpath(notebooks_dir, file))]
     end
-    modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), list_modified()))
+    modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), abspath.(list_modified())))
     if !is_masterCI() && smart_filter
         foreach(notebook_paths) do path
-            if path ∉ modified_notebooks && !is_pkg_dependent(joinpath(notebooks_path, path), repr(mod))
+            if path ∉ modified_notebooks && !is_pkg_dependent(joinpath(notebooks_dir, path), repr(mod))
                 @info "Skipping notebook $path"
                 push!(exclude_list, path)
             end
