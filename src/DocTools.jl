@@ -60,7 +60,7 @@ function build_pluto(
     notebook_paths = if recursive
         PlutoSliderServer.find_notebook_files_recursive(notebooks_dir)
     else
-        String[file for file in readdir(notebooks_dir, sort=false) if is_pluto_notebook(joinpath(notebooks_dir, file))]
+        String[file for file in readdir(notebooks_path, sort=false) if is_pluto_notebook(joinpath(notebooks_path, file))]
     end
     modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), list_modified()))
     if !is_masterCI() && smart_filter
