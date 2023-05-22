@@ -3,11 +3,20 @@ workflow:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
+default:
+  interruptible: true
 
 variables:
   REGISTRY_ID: "262915957105"
   AWS_REGION: "eu-central-1"
   CICD_ECR: "$REGISTRY_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+
+doctools test:
+  image: $CICD_ECR/julia-tooling:latest
+  stage: test
+  script:
+    - julia --color=yes --project -e "using Pkg; Pkg.instantiate(); Pkg.test()"
+
 
 pages:
   image: $CICD_ECR/julia-tooling:latest
