@@ -5,3 +5,4 @@
 /docs/build/
 .vscode
 build/
+test/Manifest.toml
