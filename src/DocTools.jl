@@ -8,7 +8,7 @@ using Pkg
 using PlutoSliderServer
 using PlutoSliderServer.Pluto: is_pluto_notebook
 
-export build_pluto, build_literate, default_makedocs, is_masterCI
+export build_pluto, build_literate, default_makedocs, is_masterCI, update_notebooks_versions
 
 include("smart_filters.jl")
 include("pluto_notebooks.jl")
@@ -56,11 +56,7 @@ function build_pluto(
     mkpath(md_dir)
     mkpath(html_dir)
     # Paths to each notebook, relative to notebook directory.
-    notebook_paths = if recursive
-        sort(PlutoSliderServer.find_notebook_files_recursive(notebooks_dir))
-    else
-        String[file for file in readdir(notebooks_dir) if is_pluto_notebook(joinpath(notebooks_dir, file))]
-    end
+    notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive)
     modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), abspath.(list_modified())))
     if !is_masterCI() && smart_filter
         foreach(notebook_paths) do path
@@ -92,6 +88,14 @@ function build_pluto(
         if activate_folder
             Pkg.activate(curr_env)
         end
+    end
+end
+
+function get_pluto_notebook_paths(dir::String; recursive::Bool=true)
+    if recursive
+        sort(PlutoSliderServer.find_notebook_files_recursive(dir))
+    else
+        String[file for file in readdir(dir) if is_pluto_notebook(joinpath(dir, file))]
     end
 end
 

@@ -71,3 +71,13 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
   end
   end
 end
+
+
+function update_notebooks_versions(dir::String; backup::Bool=false, recursive::Bool=true)
+  notebook_paths = get_pluto_notebook_paths(dir; recursive)
+  for notebook in notebook_paths
+    @info "Updating packages in $(notebook)"
+    PlutoSliderServer.Pluto.update_notebook_environment(joinpath(dir, notebook); backup)
+    @info "Updating of $(notebook) done\n"
+  end
+end
