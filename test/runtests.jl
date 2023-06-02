@@ -63,4 +63,42 @@ rm_docs_build()
             rm_docs_build()
         end
     end
+
+    @testset "Updating of dependencies" begin
+        isbackup(file) = endswith(file, r"backup [0-9].jl")
+        dir = joinpath(@__DIR__, "test_data")
+        for file in readdir(dir; join=true)
+            # Test that there is no present backup
+            @test !isbackup(file)
+            @test !isnothing(match(r"julia_version = \"1\.7", read(file, String)))
+        end
+        try
+            update_notebooks_versions(dir; backup=true)
+            for file in readdir(dir; join=true)
+                if !isbackup(file)
+                    @test !isnothing(match(Regex("julia_version = \"$(VERSION.major).$(VERSION.minor)"), read(file, String)))
+                end
+            end
+        catch e
+            rethrow(e)
+        finally
+            # Restore the original files using the backups
+            for file in readdir(dir; join=true, sort=false)
+                if !isbackup(file) && !(endswith(file, ".old"))
+                    rm(file)
+                else
+                    mv(file, replace(file, r" backup [0-9].jl" => ".jl.old")) # Temp allocation as .old.
+                end
+            end
+            for file in readdir(dir; join=true)
+                mv(file, file[begin:end-4]) # Remove the .old.
+            end
+        end
+        # Test that all modified files were replaced by the backups
+        for file in readdir(dir; join=true)
+            # Test that there is no backup
+            @test !isbackup(file)
+            @test !isnothing(match(r"julia_version = \"1\.7", read(file, String)))
+        end
+    end
 end
