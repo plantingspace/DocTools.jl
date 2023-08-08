@@ -35,7 +35,7 @@ rm_docs_build()
 
 @testset "DocTools.jl" begin
     # Tests are happening via the doc rendering itself using DocTools.
-    @testset "Test use of recursion" begin
+    @testset "With recursion" begin
         try
             build_docs_with_options(recursive=true, smart_filter=false)
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Pluto Notebook.html"))
@@ -49,6 +49,8 @@ rm_docs_build()
         finally
             rm_docs_build()
         end
+    end
+    @testset "Without recursion" begin
         try
             build_docs_with_options(recursive=false, smart_filter=false)
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Pluto Notebook.html"))
