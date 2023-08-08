@@ -75,7 +75,7 @@ function build_pluto(
             Pkg.activate(notebooks_dir)
             Pkg.instantiate()
         end
-        PlutoSliderServer.export_directory(
+        t = @elapsed PlutoSliderServer.export_directory(
             notebooks_dir;
             Export_create_index = false,
             Export_output_dir = html_dir,
@@ -83,6 +83,7 @@ function build_pluto(
             on_ready = check_for_failed_notebooks,
             notebook_paths
         )
+        @info "Running the Pluto notebooks took $(t)s"
         build_notebook_md(md_dir, html_dir, notebooks_dir)
     finally
         if activate_folder
@@ -134,7 +135,7 @@ function build_literate(
             Pkg.activate(literate_folder)
             Pkg.instantiate()
         end
-        mapreduce(vcat, dir_parser(literate_folder)) do (path, _, _)
+        mapreduce(vcat, dir_parser(literate_folder); init=String[]) do (path, _, _)
             md_subpath = path == literate_folder ? md_dir : joinpath(md_dir, relpath(path, literate_folder))
             filtered_list = filter!(readdir(path; join=true)) do file
                 out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
@@ -148,7 +149,9 @@ function build_literate(
             end
             map(filtered_list) do file
                 author, date = get_last_author_date(file)
-                Literate.markdown(file, md_subpath; flavor=Literate.DocumenterFlavor(), execute=true, postprocess=add_author_data(author, date))::String
+                t = @elapsed path = Literate.markdown(file, md_subpath; flavor=Literate.DocumenterFlavor(), execute=true, postprocess=add_author_data(author, date))::String
+                @info "Evaluated literate file in $(t)s"
+                path::String
             end
         end
     finally
