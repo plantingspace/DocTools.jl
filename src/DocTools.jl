@@ -57,10 +57,13 @@ function build_pluto(
     mkpath(html_dir)
     # Paths to each notebook, relative to notebook directory.
     notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive)
-    modified_notebooks = map(x->relpath(x, notebooks_dir), filter!(startswith(notebooks_dir), abspath.(list_modified())))
+    modified_files = list_modified()
+    modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), abspath.(modified_files)))
+    pkg_modified = is_pkg_modified(modified_files) 
     if !is_masterCI() && smart_filter
         foreach(notebook_paths) do path
-            if path ∉ modified_notebooks && !is_pkg_dependent(joinpath(notebooks_dir, path), repr(mod))
+            # To not be excluded: the notebook must be modified or there was a change in the src package and the notebook depends on it.
+            if !(path ∈ modified_notebooks || (pkg_modified && is_pkg_dependent(joinpath(notebooks_dir, path), repr(mod))))
                 @info "Skipping notebook $path"
                 push!(exclude_list, path)
             end
@@ -128,7 +131,9 @@ function build_literate(
     run || return String[]
     curr_env = dirname(Pkg.project().path)
     dir_parser = recursive ? walkdir : list_dir
-    modified_files = joinpath.(root, filter!(startswith(literate_path), list_modified())) # Get list of modified files in the `literate_path` dir. 
+    modified_files = list_modified()
+    modified_literate = joinpath.(root, filter(startswith(literate_path), modified_files)) # Get list of modified files in the `literate_path` dir. 
+    pkg_modified = is_pkg_modified(modified_files)
     try
         literate_folder = joinpath(root, literate_path)
         if activate_folder
@@ -140,7 +145,7 @@ function build_literate(
             filtered_list = filter!(readdir(path; join=true)) do file
                 out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
                 if smart_filter
-                    out &= is_masterCI() || file ∈ modified_files || is_pkg_dependent(file, repr(mod))
+                    out &= is_masterCI() || file ∈ modified_literate || (pkg_modified && is_pkg_dependent(file, repr(mod)))
                     if !out && endswith(file, ".jl")
                         @info "Skipping literate file $file"
                     end
