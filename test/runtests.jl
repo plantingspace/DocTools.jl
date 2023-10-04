@@ -14,12 +14,13 @@ function build_docs_with_options(;recursive=true, pluto=true, literate=true, sma
 
     default_makedocs(;
         root = DOCS_DIR,
-        sitename="Doctools.jl",
-        modules=[DocTools],
-        authors="PlantingSpace",
-        macros=Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
-        notebooks=[pluto_pages; literate_pages],
-        pages=["Home" => "index.md"],
+        sitename = "Doctools.jl",
+        modules = [DocTools],
+        authors = "PlantingSpace",
+        repo = "https://gitlab.com/plantingspace/doctools/",
+        macros = Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
+        notebooks = [pluto_pages; literate_pages],
+        pages = ["Home" => "index.md"],
     )
 end
 

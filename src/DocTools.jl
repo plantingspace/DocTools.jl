@@ -2,7 +2,6 @@ module DocTools
 
 using Dates
 using Documenter
-using Git: git
 using Literate
 using Pkg
 using PlutoSliderServer
@@ -171,7 +170,8 @@ function list_dir(path::String)
 end
 
 function get_last_author_date(file::String)
-    author, date = readlines(git(["log", "-n 1", "--pretty=format:%an (%ae)\n%as", "--", file]))
+    pretty = "format:%an (%ae)\n%as"
+    author, date = readlines(`git log -n 1 --pretty=$(pretty) -- $(file)`)
     date = Date(date)
     author, "$(monthname(date)) $(day(date)), $(year(date))"
 end
@@ -191,18 +191,17 @@ and make some internals like `macros` more accessible.
 - `macros`: `Dict` of LaTeX "\\newcommand". For example `\\newcommand{\\Lc}{\\mathcal{L}}` 
 is written as `:Lc => ["\\mathcal{L}"]`, and `\\newcommand{\\bf}{\\mathsymbol{#1}}` is 
 written as `:bf => ["\\bf{#1}", 1]`.
-- `strict`: Decides if the run should error in case some rendering fails.
 - `prettify`: Adapt the URL if the run is local, on CI master or CI MR.
 - `notebooks`: File list of rendered notebooks.
 - `pages`: The usual `pages` argument from `makedocs`
 """
 function default_makedocs(;
    macros::Dict{Symbol,<:AbstractVector}=Dict{Symbol,Vector}(),
-   strict::Bool=true,
    prettify::Bool=is_masterCI(),
    notebooks::AbstractVector=String[],
    notebook_path::String="notebooks",
    pages::AbstractVector{<:Pair{String,<:Any}}=Pair{String,Any}[],
+   repo::Union{Nothing,AbstractString} = nothing,
    kwargs...
     )
     mathengine = Documenter.MathJax2(Dict(:TeX => Dict(:Macros => macros)))
@@ -211,10 +210,16 @@ function default_makedocs(;
     else
         "Notebooks" => rework_paths(notebooks, notebook_path)
     end
+    if isnothing(repo)
+        kwargs = (;kwargs..., remotes = nothing)
+        repo = ""
+    else
+        repo = Remotes.GitLab(repo)
+    end
     makedocs(;
-        strict,
         format=Documenter.HTML(;prettyurls=prettify, mathengine),
         pages=[pages; notebook_pages],
+        repo,
         kwargs...
     )
 end
