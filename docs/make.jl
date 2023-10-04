@@ -8,7 +8,7 @@ default_makedocs(;
     sitename="Doctools.jl",
     modules=[DocTools],
     authors="PlantingSpace",
-    repo="https://github.com/plantingspace/doctools/-/blob/{commit}{path}#{line}",
+    repo = "https://gitlab.com/plantingspace/doctools/",
     macros=Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
     notebooks=[pluto_pages; literate_pages],
     pages=["Home" => "index.md"],

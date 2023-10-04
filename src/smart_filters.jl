@@ -1,6 +1,6 @@
 function list_modified(target::String=get(ENV, "CI_DEFAULT_BRANCH", "main"))
-    run(git(["fetch", "origin", target])) # We need to fetch the origin to get the latest changes.
-    readlines(git(["diff", "--name-only",  "origin/" * target * "..."]))
+    run(`git fetch origin $(target)`) # We need to fetch the origin to get the latest changes.
+    readlines(`git diff --name-only origin/$(target)...`)
 end
 
 function is_pkg_modified(paths::AbstractVector{<:String})
