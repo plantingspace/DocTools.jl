@@ -34,11 +34,23 @@ end
 
 rm_docs_build()
 
+show_dir_structure(topdir=".") = for (root, dirs, files) in walkdir(topdir)
+    println("Directories in $root")
+    for dir in dirs
+        println(joinpath(root, dir)) # path to directories
+    end
+    println("Files in $root")
+    for file in files
+        println(joinpath(root, file)) # path to files
+    end
+end
+
 @testset "DocTools.jl" begin
     # Tests are happening via the doc rendering itself using DocTools.
     @testset "With recursion" begin
         try
             build_docs_with_options(recursive=true, smart_filter=false)
+            show_dir_structure()
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Pluto Notebook.html"))
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Subfolder Pluto", "Subfolder Pluto Notebook.html"))
             @test isfile(joinpath(NOTEBOOKS_DIR, "Literate Notebook.html"))
@@ -54,6 +66,7 @@ rm_docs_build()
     @testset "Without recursion" begin
         try
             build_docs_with_options(recursive=false, smart_filter=false)
+            show_dir_structure()
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Pluto Notebook.html"))
             @test !isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Subfolder Pluto", "Subfolder Pluto Notebook.html"))
             @test isfile(joinpath(NOTEBOOKS_DIR, "Literate Notebook.html"))
