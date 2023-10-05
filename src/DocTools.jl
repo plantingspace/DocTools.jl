@@ -199,7 +199,7 @@ written as `:bf => ["\\bf{#1}", 1]`.
 """
 function default_makedocs(;
    macros::Dict{Symbol,<:AbstractVector}=Dict{Symbol,Vector}(),
-   prettify::Bool=is_masterCI(),
+   prettify::Bool=is_mainCI(),
    notebooks::AbstractVector=String[],
    notebook_path::String="notebooks",
    pages::AbstractVector{<:Pair{String,<:Any}}=Pair{String,Any}[],
