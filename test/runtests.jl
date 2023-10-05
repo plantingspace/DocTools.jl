@@ -24,6 +24,8 @@ function build_docs_with_options(;recursive=true, pluto=true, literate=true, sma
     )
 end
 
+const ismain = is_mainCI()
+prettified(str, ismain::Bool = false) = ismain ? joinpath(str, "index.html") : str * ".html"
 
 function rm_docs_build()
     cd(joinpath(@__DIR__, ".."))
@@ -41,10 +43,10 @@ rm_docs_build()
             build_docs_with_options(recursive=true, smart_filter=false)
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Pluto Notebook.html"))
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Subfolder Pluto", "Subfolder Pluto Notebook.html"))
-            @test isfile(joinpath(NOTEBOOKS_DIR, "Literate Notebook.html"))
-            @test isfile(joinpath(NOTEBOOKS_DIR, "Pluto Notebook.html"))
-            @test isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Literate", "Subfolder Literate Notebook.html"))
-            @test isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Pluto", "Subfolder Pluto Notebook.html"))
+            @test isfile(joinpath(NOTEBOOKS_DIR, prettified("Literate Notebook", ismain)))
+            @test isfile(joinpath(NOTEBOOKS_DIR, prettified("Pluto Notebook", ismain)))
+            @test isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Literate", prettified("Subfolder Literate Notebook", ismain)))
+            @test isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Pluto", prettified("Subfolder Pluto Notebook", ismain)))
         catch e
             rethrow(e)
         finally
@@ -56,10 +58,10 @@ rm_docs_build()
             build_docs_with_options(recursive=false, smart_filter=false)
             @test isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Pluto Notebook.html"))
             @test !isfile(joinpath(BUILD_DIR, "assets", "notebooks", "Subfolder Pluto", "Subfolder Pluto Notebook.html"))
-            @test isfile(joinpath(NOTEBOOKS_DIR, "Literate Notebook.html"))
-            @test isfile(joinpath(NOTEBOOKS_DIR, "Pluto Notebook.html"))
-            @test !isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Literate", "Subfolder Literate Notebook.html"))
-            @test !isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Pluto", "Subfolder Pluto Notebook.html"))
+            @test isfile(joinpath(NOTEBOOKS_DIR, prettified("Literate Notebook", ismain)))
+            @test isfile(joinpath(NOTEBOOKS_DIR, prettified("Pluto Notebook", ismain)))
+            @test !isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Literate", prettified("Subfolder Literate Notebook", ismain)))
+            @test !isfile(joinpath(NOTEBOOKS_DIR, "Subfolder Pluto", prettified("Subfolder Pluto Notebook", ismain)))
         catch e
             rethrow(e)
         finally

@@ -7,7 +7,7 @@ using Pkg
 using PlutoSliderServer
 using PlutoSliderServer.Pluto: is_pluto_notebook
 
-export build_pluto, build_literate, default_makedocs, is_masterCI, update_notebooks_versions
+export build_pluto, build_literate, default_makedocs, is_mainCI, update_notebooks_versions
 
 include("smart_filters.jl")
 include("pluto_notebooks.jl")
@@ -16,8 +16,10 @@ include("pluto_notebooks.jl")
 strip_extension(s::AbstractString) = s[1:(findlast(==('.'), s) - 1)]
 
 "Detect if the current run is on master/main or on a MR"
-is_masterCI()::Bool = get(ENV, "CI", nothing) == "true" && !(haskey(ENV, "CI_MERGE_REQUEST_ID"))
+is_mainCI()::Bool =
+    get(ENV, "CI", nothing) == "true" && !(haskey(ENV, "CI_MERGE_REQUEST_ID"))
 
+@deprecate is_masterCI is_mainCI
 """
 Build notebooks using PlutoSliderServer and create Markdown file containing them
 in an iframe.
