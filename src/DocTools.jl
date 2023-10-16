@@ -204,6 +204,7 @@ function default_makedocs(;
    notebook_path::String="notebooks",
    pages::AbstractVector{<:Pair{String,<:Any}}=Pair{String,Any}[],
    repo::Union{Nothing,AbstractString} = nothing,
+   size_threshold::Union{Nothing, Integer} = nothing, # Is normally 200 * 2^10
    kwargs...
     )
     mathengine = Documenter.MathJax2(Dict(:TeX => Dict(:Macros => macros)))
@@ -219,7 +220,7 @@ function default_makedocs(;
         repo = Remotes.GitLab(repo)
     end
     makedocs(;
-        format=Documenter.HTML(;prettyurls=prettify, mathengine),
+        format=Documenter.HTML(;prettyurls=prettify, mathengine, size_threshold),
         pages=[pages; notebook_pages],
         repo,
         kwargs...
