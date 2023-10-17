@@ -46,6 +46,8 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
     md_subpath = normpath(joinpath(md_outdir, subpath)) # The output folder for the md file
     mkpath(md_subpath) # Build the dir when needed
     map(filter!(endswith(".html"), files)) do f
+      html_file = joinpath(path, f)
+      add_base_target!(html_file)
       author, date = get_last_author_date(normpath(joinpath(jl_dir, subpath, strip_extension(f) * ".jl")))
       file_path = joinpath(md_subpath, strip_extension(f) * ".md")
       open(file_path, "w") do io
@@ -72,6 +74,20 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
   end
 end
 
+"""
+Add `<base target="_blank">` in the `<head>` of the html file.
+"""
+function add_base_target!(file::AbstractString)
+  lines = readlines(file)
+  open(file, "w") do io
+    for line in lines
+      println(io, line)
+      if !isnothing(match(r"<head>", line))
+        println(io, """<base target="_blank">""")
+      end
+    end
+  end
+end
 
 function update_notebooks_versions(dir::String; backup::Bool=false, recursive::Bool=true)
   notebook_paths = get_pluto_notebook_paths(dir; recursive)
