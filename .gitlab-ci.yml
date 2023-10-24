@@ -1,3 +1,7 @@
+stages:
+ - test
+ - deploy
+
 workflow:
   rules:
     - if: $CI_MERGE_REQUEST_ID
@@ -16,7 +20,6 @@ doctools test:
   stage: test
   script:
     - julia --color=yes --project -e "using Pkg; Pkg.instantiate(); Pkg.test()"
-
 
 pages:
   image: $CICD_ECR/julia-tooling:latest
