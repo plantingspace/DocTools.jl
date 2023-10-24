@@ -5,11 +5,11 @@ pluto_pages = build_pluto(DocTools, "pluto_notebooks")
 literate_pages = build_literate(DocTools, "literate_notebooks")
 
 default_makedocs(;
-    sitename="Doctools.jl",
-    modules=[DocTools],
-    authors="PlantingSpace",
-    repo = "https://gitlab.com/plantingspace/doctools/",
-    macros=Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
-    notebooks=[pluto_pages; literate_pages],
-    pages=["Home" => "index.md"],
+  sitename = "Doctools.jl",
+  modules = [DocTools],
+  authors = "PlantingSpace",
+  repo = "https://gitlab.com/plantingspace/doctools/",
+  macros = Dict(:ps => ["{PlantingSpace}"], :Lc => ["\\mathcal{L}"]),
+  notebooks = [pluto_pages; literate_pages],
+  pages = ["Home" => "index.md"],
 )

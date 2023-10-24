@@ -6,36 +6,41 @@ If it is the case print out, for each notebook, the content of the failing cells
 and the output messages.
 """
 function check_for_failed_notebooks(result::NamedTuple)
-    failed_notebooks = Dict{String,Vector}()
-    for notebook in result.notebook_sessions
-      # check for every notebook that no cell errored
-      state = notebook.run.original_state
-      errored_cells = findall(cell -> cell["errored"], state["cell_results"])
-      isempty(errored_cells) && continue
-      failed_notebooks[notebook.path] = [
-        (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"][:msg]) for
-        id in errored_cells
-      ]
-    end
-    if !isempty(failed_notebooks)
-      error_msgs = ""
-      for (key, cells) in pairs(failed_notebooks)
-        error_msgs *= "$key:\n"
-        for (input, output) in cells
-          error_msgs *= "\t$input => $output\n"
-        end
-        error_msgs *= "\n"
-      end
-      error("The following Pluto notebooks failed to run successfully: $(keys(failed_notebooks))\n\n", error_msgs)
-    end
+  failed_notebooks = Dict{String, Vector}()
+  for notebook in result.notebook_sessions
+    # check for every notebook that no cell errored
+    state = notebook.run.original_state
+    errored_cells = findall(cell -> cell["errored"], state["cell_results"])
+    isempty(errored_cells) && continue
+    failed_notebooks[notebook.path] = [
+      (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"][:msg]) for
+      id in errored_cells
+    ]
   end
+  if !isempty(failed_notebooks)
+    error_msgs = ""
+    for (key, cells) in pairs(failed_notebooks)
+      error_msgs *= "$key:\n"
+      for (input, output) in cells
+        error_msgs *= "\t$input => $output\n"
+      end
+      error_msgs *= "\n"
+    end
+    error("The following Pluto notebooks failed to run successfully: $(keys(failed_notebooks))\n\n", error_msgs)
+  end
+end
 
 """
 Based on a list of html pages (built from PlutoSliderServer), create markdown 
 files compatible with Documenter.jl encapsulating the notebooks into an
 <iframe>
 """
-function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, jl_dir::AbstractString, ismaster::Bool=is_masterCI())
+function build_notebook_md(
+  md_outdir::AbstractString,
+  html_dir::AbstractString,
+  jl_dir::AbstractString,
+  ismaster::Bool = is_masterCI(),
+)
   mkpath(md_outdir) # create directory if not existing
   # For each html file produced, make a .md file for Documenter which will 
   # encapsulate the html file. This should be seen as a workaround
@@ -69,8 +74,8 @@ function build_notebook_md(md_outdir::AbstractString, html_dir::AbstractString, 
 """ |> add_author_data(author, date),
         )
       end
-    file_path
-  end
+      file_path
+    end
   end
 end
 
@@ -89,7 +94,7 @@ function add_base_target!(file::AbstractString)
   end
 end
 
-function update_notebooks_versions(dir::String; backup::Bool=false, recursive::Bool=true)
+function update_notebooks_versions(dir::String; backup::Bool = false, recursive::Bool = true)
   notebook_paths = get_pluto_notebook_paths(dir; recursive)
   for notebook in notebook_paths
     @info "Updating packages in $(notebook)"
