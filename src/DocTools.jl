@@ -37,6 +37,8 @@ It returns the list of the paths of the created markdown pages.
 - `exclude_list`: Array of files to exclude from the rendering.
 - `recursive`: Also treats the subfolder (and return the same structure).
 - `activate_folder`: Activate the environment of the folder containing the notebooks.
+- `smart_filter`: Decide which notebooks to run based on changes (direct change or change `src/`).
+- `use_cache`: Use the caching function of `PlutoSliderServer`.
 """
 function build_pluto(
   mod::Module,
@@ -50,6 +52,7 @@ function build_pluto(
   recursive::Bool = true,
   activate_folder::Bool = true,
   smart_filter::Bool = true,
+  use_cache::Bool = false,
 )
   run || return String[]
   !isabspath(notebooks_dir) && (notebooks_dir = joinpath(root, notebooks_dir))
@@ -79,14 +82,29 @@ function build_pluto(
       Pkg.activate(notebooks_dir)
       Pkg.instantiate()
     end
-    t = @elapsed PlutoSliderServer.export_directory(
-      notebooks_dir;
-      Export_create_index = false,
-      Export_output_dir = html_dir,
-      Export_exclude = exclude_list,
-      on_ready = check_for_failed_notebooks,
-      notebook_paths,
-    )
+    t = @elapsed if use_cache
+      PlutoSliderServer.export_directory(
+        notebooks_dir;
+        Export_create_index = false,
+        Export_output_dir = html_dir,
+        Export_cache_dir = joinpath(html_dir, "cache"),
+        Export_baked_state = false,
+        Export_baked_notebookfile = false,
+        Export_offer_binder = false,
+        Export_exclude = exclude_list,
+        on_ready = check_for_failed_notebooks,
+        notebook_paths,
+      )
+    else
+      PlutoSliderServer.export_directory(
+        notebooks_dir;
+        Export_create_index = false,
+        Export_output_dir = html_dir,
+        Export_exclude = exclude_list,
+        on_ready = check_for_failed_notebooks,
+        notebook_paths,
+      )
+    end
     @info "Running the Pluto notebooks took $(t)s"
     build_notebook_md(md_dir, html_dir, notebooks_dir)
   finally

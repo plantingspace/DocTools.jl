@@ -7,8 +7,14 @@ const NOTEBOOKS_DIR = abspath(joinpath(BUILD_DIR, "notebooks"))
 const SRC_ASSETS_DIR = abspath(joinpath(DOCS_DIR, "src", "assets"))
 const SRC_NOTEBOOKS_DIR = abspath(joinpath(DOCS_DIR, "src", "notebooks"))
 
-function build_docs_with_options(; recursive = true, pluto = true, literate = true, smart_filter = true)
-  pluto_pages = pluto ? build_pluto(DocTools, "pluto_notebooks"; recursive, smart_filter) : String[]
+function build_docs_with_options(;
+  recursive = true,
+  pluto = true,
+  literate = true,
+  smart_filter = true,
+  use_cache = false,
+)
+  pluto_pages = pluto ? build_pluto(DocTools, "pluto_notebooks"; recursive, smart_filter, use_cache) : String[]
 
   literate_pages = literate ? build_literate(DocTools, "literate_notebooks"; recursive, smart_filter) : String[]
 
@@ -66,6 +72,30 @@ rm_docs_build()
       rethrow(e)
     finally
       rm_docs_build()
+    end
+  end
+
+  @testset "Testing caching" begin
+    # Reason we check the cache only is that for some reason on a second run the .plutostate is modified.
+    # See 
+    get_hash() = readchomp(
+      pipeline(`find $(joinpath(SRC_ASSETS_DIR, "notebooks", "cache")) -type f -exec md5sum '{}' +`, `sort`, `md5sum`),
+    )
+    @testset "Working with cache" begin
+      try
+        build_docs_with_options(literate = false, recursive = false, smart_filter = false, use_cache = true)
+        # We create a hash of the directory to detect any change
+        curr_hash = get_hash()
+        build_docs_with_options(literate = false, recursive = false, smart_filter = false, use_cache = true)
+        # If the notebook would have been rerun we would have a different value for the non-deterministic 
+        # cell and the hash would be different.
+        new_hash = get_hash()
+        @test new_hash == curr_hash
+      catch e
+        rethrow(e)
+      finally
+        rm_docs_build()
+      end
     end
   end
 
