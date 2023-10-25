@@ -8,7 +8,7 @@ using InteractiveUtils
 md"# This my example"
 
 # ╔═╡ d25fc347-60a3-4401-a7d5-7d613bd2a94d
-a = 2
+a = rand()
 
 # ╔═╡ 8ef2a30d-7a5c-47de-980c-cbceb5a9bbf0
 b = 3

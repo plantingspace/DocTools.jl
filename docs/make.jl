@@ -1,6 +1,6 @@
 using DocTools
 
-pluto_pages = build_pluto(DocTools, "pluto_notebooks")
+pluto_pages = build_pluto(DocTools, "pluto_notebooks"; smart_filter = false, use_cache = true)
 
 literate_pages = build_literate(DocTools, "literate_notebooks")
 
