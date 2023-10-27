@@ -16,7 +16,8 @@ function build_docs_with_options(;
 )
   pluto_pages = pluto ? build_pluto(DocTools, "pluto_notebooks"; recursive, smart_filter, use_cache) : String[]
 
-  literate_pages = literate ? build_literate(DocTools, "literate_notebooks"; recursive, smart_filter) : String[]
+  literate_pages =
+    literate ? build_literate(DocTools, "literate_notebooks"; recursive, smart_filter, use_cache) : String[]
 
   default_makedocs(;
     root = DOCS_DIR,
@@ -78,19 +79,24 @@ rm_docs_build()
   @testset "Testing caching" begin
     # Reason we check the cache only is that for some reason on a second run the .plutostate is modified.
     # See 
-    get_hash() = readchomp(
-      pipeline(`find $(joinpath(SRC_ASSETS_DIR, "notebooks", "cache")) -type f -exec md5sum '{}' +`, `sort`, `md5sum`),
+    get_hash(folder::String) = readchomp(
+      pipeline(`find $(folder) -type f -exec md5sum '{}' +`, `sort`, `md5sum`),
     )
+    CACHE_DIR = joinpath(SRC_ASSETS_DIR, "notebooks", "cache")
+    mkpath(CACHE_DIR)
     @testset "Working with cache" begin
       try
-        build_docs_with_options(literate = false, recursive = false, smart_filter = false, use_cache = true)
+        build_docs_with_options(recursive = false, smart_filter = false, use_cache = true)
         # We create a hash of the directory to detect any change
-        curr_hash = get_hash()
-        build_docs_with_options(literate = false, recursive = false, smart_filter = false, use_cache = true)
+        curr_cache_hash = get_hash(CACHE_DIR)
+        curr_notebook_hash = get_hash(SRC_NOTEBOOKS_DIR)
+        build_docs_with_options(recursive = false, smart_filter = false, use_cache = true)
         # If the notebook would have been rerun we would have a different value for the non-deterministic 
         # cell and the hash would be different.
-        new_hash = get_hash()
-        @test new_hash == curr_hash
+        new_cache_hash = get_hash(CACHE_DIR)
+        new_notebook_hash = get_hash(SRC_NOTEBOOKS_DIR)
+        @test new_cache_hash == curr_cache_hash
+        @test new_notebook_hash == curr_notebook_hash
       catch e
         rethrow(e)
       finally
