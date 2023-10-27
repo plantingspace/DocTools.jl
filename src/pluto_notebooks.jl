@@ -39,7 +39,7 @@ function build_notebook_md(
   md_outdir::AbstractString,
   html_dir::AbstractString,
   jl_dir::AbstractString,
-  ismaster::Bool = is_masterCI(),
+  ismaster::Bool = is_mainCI(),
 )
   mkpath(md_outdir) # create directory if not existing
   # For each html file produced, make a .md file for Documenter which will 

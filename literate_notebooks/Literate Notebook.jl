@@ -8,6 +8,8 @@ using StaticArrays
 SVector{3}(1, 2, 3)
 #
 x = 3
+#
+y = rand()
 # ```math
 # \Lc = 1.0
 # ```

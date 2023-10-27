@@ -10,7 +10,7 @@ It contains 4 main functions:
 and process them to make them `Documenter` compatible.
 - `build_literate`: similar to `build_pluto` but for [`Literate.jl`](https://github.com/fredrikekre/Literate.jl) files.
 - `default_makedocs`: opinionated version of `makedocs` with given defaults and other.
-- `is_masterCI`: check for Gitlab CI to see if it is run on `master/main` or on a MR.
+- `is_mainCI`: check for Gitlab CI to see if it is run on `master/main` or on a MR.
 
 A typical `make.jl` file looks like:
 

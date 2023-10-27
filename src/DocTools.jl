@@ -64,7 +64,7 @@ function build_pluto(
   modified_files = list_modified()
   modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), abspath.(modified_files)))
   pkg_modified = is_pkg_modified(modified_files)
-  if !is_masterCI() && smart_filter
+  if !is_mainCI() && smart_filter
     foreach(notebook_paths) do path
       # To not be excluded: the notebook must be modified or there was a change in the src package and the notebook depends on it.
       if !(path ∈ modified_notebooks || (pkg_modified && is_pkg_dependent(joinpath(notebooks_dir, path), repr(mod))))
@@ -146,6 +146,7 @@ function build_literate(
   recursive::Bool = true,
   activate_folder::Bool = true,
   smart_filter::Bool = true,
+  use_cache::Bool = false,
 )
   run || return String[]
   curr_env = dirname(Pkg.project().path)
@@ -164,7 +165,7 @@ function build_literate(
       filtered_list = filter!(readdir(path; join = true)) do file
         out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
         if smart_filter
-          out &= is_masterCI() || file ∈ modified_literate || (pkg_modified && is_pkg_dependent(file, repr(mod)))
+          out &= is_mainCI() || file ∈ modified_literate || (pkg_modified && is_pkg_dependent(file, repr(mod)))
           if !out && endswith(file, ".jl")
             @info "Skipping literate file $file"
           end
@@ -173,15 +174,24 @@ function build_literate(
       end
       map(filtered_list) do file
         author, date = get_last_author_date(file)
+        source_hash = readchomp(`md5sum $(file)`)
+        if use_cache
+          filepath = joinpath(md_subpath, strip_extension(basename(file)) * ".md")
+          prev_source_hash = get_sourcefile_hash(filepath)
+          if prev_source_hash == source_hash
+            @info "$file already rendered in cache, skipping"
+            return filepath
+          end
+        end
         t = @elapsed path = Literate.markdown(
           file,
           md_subpath;
           flavor = Literate.DocumenterFlavor(),
           execute = true,
-          postprocess = add_author_data(author, date),
+          postprocess = append_hash(source_hash) ∘ add_author_data(author, date),
         )::String
         @info "Evaluated literate file in $(t)s"
-        path::String
+        path
       end
     end
   finally
@@ -193,6 +203,32 @@ end
 
 function list_dir(path::String)
   ((path, String[], String[]),)
+end
+
+function get_sourcefile_hash(filepath)
+  if isfile(filepath)
+    hash_lines = filter(x -> !isnothing(match(r"Source file hash: (.*)", x)), readlines(filepath))
+    if isempty(hash_lines)
+      @info "Could not find a hash in $(filepath)."
+      return ""
+    elseif length(hash_lines) > 1
+      @info "$(filepath) seems to have multiple hashes written down, it will be rerendered."
+      return ""
+    else
+      hashes = match(r"Source file hash: (.*)", only(hash_lines))
+      return only(hashes)
+    end
+  else
+    @info "Did not find markdown file $(filepath)"
+    return ""
+  end
+end
+
+function append_hash(file_hash)
+  function append_hash(str)
+    str *
+    "Source file hash: $(file_hash)"
+  end
 end
 
 function get_last_author_date(file::String)
