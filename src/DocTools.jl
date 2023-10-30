@@ -53,7 +53,7 @@ function build_pluto(
   activate_folder::Bool = true,
   smart_filter::Bool = true,
   use_cache::Bool = false,
-)
+)::Vector{String}
   run || return String[]
   !isabspath(notebooks_dir) && (notebooks_dir = joinpath(root, notebooks_dir))
   # Create folders if they do not exist already
@@ -147,7 +147,7 @@ function build_literate(
   activate_folder::Bool = true,
   smart_filter::Bool = true,
   use_cache::Bool = false,
-)
+)::Vector{String}
   run || return String[]
   curr_env = dirname(Pkg.project().path)
   dir_parser = recursive ? walkdir : list_dir
