@@ -62,7 +62,7 @@ function build_pluto(
   # Paths to each notebook, relative to notebook directory.
   notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive)
   modified_files = list_modified()
-  modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), abspath.(modified_files)))
+  modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(has_parent(notebooks_dir), abspath.(modified_files)))
   pkg_modified = is_pkg_modified(modified_files)
   if !is_mainCI() && smart_filter
     foreach(notebook_paths) do path
@@ -121,6 +121,10 @@ function get_pluto_notebook_paths(dir::String; recursive::Bool = true)
     String[file for file in readdir(dir) if is_pluto_notebook(joinpath(dir, file))]
   end
 end
+
+"Curried function to check if a path contain the given string in its parents folder"
+has_parent(parent::String) = path -> has_parent(path, parent)
+has_parent(path::String, parent::String) = parent in splitpath(path)
 
 """
 Builds notebooks using the literate format and returns the list of the output files.
