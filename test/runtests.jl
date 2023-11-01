@@ -76,6 +76,12 @@ rm_docs_build()
     end
   end
 
+  @testset "Tooling" begin
+    @test DocTools.has_parent("notebooks")("notebooks/folder/bar.jl")
+    @test DocTools.has_parent("workbench")("Kamchatka/workbench/bar.jl")
+    @test !DocTools.has_parent("foo")("x/y/z.jl")
+  end
+
   @testset "Testing caching" begin
     # Reason we check the cache only is that for some reason on a second run the .plutostate is modified.
     # See 
