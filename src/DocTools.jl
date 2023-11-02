@@ -55,14 +55,16 @@ function build_pluto(
   use_cache::Bool = false,
 )::Vector{String}
   run || return String[]
-  !isabspath(notebooks_dir) && (notebooks_dir = joinpath(root, notebooks_dir))
+  if !isabspath(notebooks_dir)
+    notebooks_dir = joinpath(root, notebooks_dir)
+  end
   # Create folders if they do not exist already
   mkpath(md_dir)
   mkpath(html_dir)
   # Paths to each notebook, relative to notebook directory.
   notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive)
   modified_files = list_modified()
-  modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(has_parent(notebooks_dir), abspath.(modified_files)))
+  modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), modified_files))
   pkg_modified = is_pkg_modified(modified_files)
   if !is_mainCI() && smart_filter
     foreach(notebook_paths) do path
