@@ -169,7 +169,7 @@ function build_literate(
       Pkg.instantiate()
     end
     mapreduce(vcat, dir_parser(literate_path); init = String[]) do (path, _, _)
-      md_subpath = path == literate_path ? md_dir : joinpath(md_dir, relpath(path, literate_path))
+      md_subpath = normpath(joinpath(md_dir, relpath(path, literate_path)))
       filtered_list = filter!(readdir(path; join = true)) do file
         out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
         if smart_filter
