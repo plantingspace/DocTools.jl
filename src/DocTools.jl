@@ -155,19 +155,21 @@ function build_literate(
   use_cache::Bool = false,
 )::Vector{String}
   run || return String[]
+  if !isabspath(literate_path)
+    literate_path = joinpath(root, literate_path)
+  end
   curr_env = dirname(Pkg.project().path)
   dir_parser = recursive ? walkdir : list_dir
   modified_files = list_modified()
-  modified_literate = joinpath.(root, filter(startswith(literate_path), modified_files)) # Get list of modified files in the `literate_path` dir. 
+  modified_literate = filter(startswith(literate_path), modified_files) # Get list of modified files in the `literate_path` dir.
   pkg_modified = is_pkg_modified(modified_files)
   try
-    literate_folder = joinpath(root, literate_path)
     if activate_folder
-      Pkg.activate(literate_folder)
+      Pkg.activate(literate_path)
       Pkg.instantiate()
     end
-    mapreduce(vcat, dir_parser(literate_folder); init = String[]) do (path, _, _)
-      md_subpath = path == literate_folder ? md_dir : joinpath(md_dir, relpath(path, literate_folder))
+    mapreduce(vcat, dir_parser(literate_path); init = String[]) do (path, _, _)
+      md_subpath = normpath(joinpath(md_dir, relpath(path, literate_path)))
       filtered_list = filter!(readdir(path; join = true)) do file
         out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
         if smart_filter
