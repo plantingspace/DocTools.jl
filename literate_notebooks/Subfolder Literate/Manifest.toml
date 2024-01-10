@@ -134,7 +134,7 @@ version = "0.9.3"
 
 [[deps.DocTools]]
 deps = ["Dates", "Documenter", "Literate", "Pkg", "PlutoSliderServer"]
-path = ".."
+path = "../.."
 uuid = "f6acdd4c-f2c6-4daa-abc6-3846b16bd159"
 version = "0.1.0"
 
