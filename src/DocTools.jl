@@ -79,6 +79,8 @@ function build_pluto(
   # we just give it a directory to explore.
   # But first we preinstantiate the workbench directory.
   curr_env = dirname(Pkg.project().path)
+  # This avoids the issue of trying to find the Pluto version in an environment not containing Pluto.
+  getproperty(PlutoSliderServer, Symbol("../Export.jl")).try_get_exact_pluto_version()
   try
     if activate_folder
       Pkg.activate(notebooks_dir)
@@ -164,11 +166,11 @@ function build_literate(
   modified_literate = filter(startswith(literate_path), modified_files) # Get list of modified files in the `literate_path` dir.
   pkg_modified = is_pkg_modified(modified_files)
   try
-    if activate_folder
-      Pkg.activate(literate_path)
-      Pkg.instantiate()
-    end
     mapreduce(vcat, dir_parser(literate_path); init = String[]) do (path, _, _)
+      if activate_folder
+        Pkg.activate(path)
+        Pkg.instantiate()
+      end
       md_subpath = normpath(joinpath(md_dir, relpath(path, literate_path)))
       filtered_list = filter!(readdir(path; join = true)) do file
         out = endswith(file, ".jl") && file ∉ exclude_list # Basic check
