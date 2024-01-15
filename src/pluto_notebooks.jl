@@ -7,25 +7,31 @@ and the output messages.
 """
 function check_for_failed_notebooks(result::NamedTuple)
   failed_notebooks = Dict{String, Vector}()
-  for notebook in result.notebook_sessions
-    # check for every notebook that no cell errored
-    state = notebook.run.original_state
+  # notebook session is a `NotebookSession` from PlutoSliderServer.jl.
+  for notebook_session in result.notebook_sessions
+    # Check for every notebook that no cell errored.
+    # State is a large JSON style `Dict` containing all the informations about the ran notebook.
+    # You can find the definition in Pluto.jl/src/webserver/Dynamic.jl/notebook_to_js.
+    state = notebook_session.run.original_state
     errored_cells = findall(cell -> cell["errored"], state["cell_results"])
     isempty(errored_cells) && continue
-    failed_notebooks[notebook.path] = [
-      (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"][:msg]) for
-      id in errored_cells
+    failed_notebooks[notebook_session.path] = [
+      (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"]["msg"]) for
+      id in sort(errored_cells; by = id -> findfirst(==(id), state["cell_order"]))
     ]
   end
   if !isempty(failed_notebooks)
-    error_msgs = ""
+    io = IOBuffer()
     for (key, cells) in pairs(failed_notebooks)
-      error_msgs *= "$key:\n"
+      printstyled(IOContext(io, :color => true), "$key:\n"; bold = true, color = :green, underline = true)
       for (input, output) in cells
-        error_msgs *= "\t$input => $output\n"
+        printstyled(IOContext(io, :color => true), "• $input"; color = :blue)
+        print(io, " => ")
+        printstyled(IOContext(io, :color => true), "$output\n"; color = :red)
       end
-      error_msgs *= "\n"
+      println(io)
     end
+    error_msgs = String(take!(io))
     error("The following Pluto notebooks failed to run successfully: $(keys(failed_notebooks))\n\n", error_msgs)
   end
 end
