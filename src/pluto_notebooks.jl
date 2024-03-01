@@ -56,10 +56,10 @@ function build_notebook_md(
     depth = subpath == "." ? 0 : length(splitpath(subpath)) # We need the depth to get the relative path of subfolder notebooks.
     md_subpath = normpath(joinpath(md_outdir, subpath)) # The output folder for the md file
     mkpath(md_subpath) # Build the dir when needed
-    map(filter!(endswith(".html"), files)) do f
+    map(filter!(f -> endswith(f, ".html") && has_matching_jl(f, jl_dir, subpath), files)) do f
       html_file = joinpath(path, f)
       add_base_target!(html_file)
-      author, date = get_last_author_date(normpath(joinpath(jl_dir, subpath, strip_extension(f) * ".jl")))
+      author, date = get_last_author_date(matching_jl(f, jl_dir, subpath))
       file_path = joinpath(md_subpath, strip_extension(f) * ".md")
       open(file_path, "w") do io
         # Fake an inside HTML page in documenter.
