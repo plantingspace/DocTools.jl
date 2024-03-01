@@ -241,6 +241,10 @@ function append_hash(file_hash)
   end
 end
 
+"Obtain the path of the corresponding source julia file in `jl_dir/subpath`"
+matching_jl(file, jl_dir, subpath) = normpath(joinpath(jl_dir, subpath, strip_extension(file) * ".jl"))
+has_matching_jl(file, jl_dir, subpath) = isfile(matching_jl(file, jl_dir, subpath))
+
 function get_last_author_date(file::String)
   pretty = "format:%an (%ae)\n%as"
   author, date = readlines(`git log -n 1 --pretty=$(pretty) -- $(file)`)
