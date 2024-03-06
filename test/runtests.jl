@@ -111,6 +111,14 @@ rm_docs_build()
     end
   end
 
+  @testset "Error checking" begin
+    @test_throws "The following Pluto notebook failed to run successfully" build_pluto(
+      DocTools,
+      "test/failed_notebooks";
+      smart_filter = false,
+    )
+  end
+
   @testset "Updating of dependencies" begin
     isbackup(file) = endswith(file, r"backup [0-9].jl")
     dir = joinpath(@__DIR__, "test_data")
