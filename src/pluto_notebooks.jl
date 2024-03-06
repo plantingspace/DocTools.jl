@@ -16,7 +16,7 @@ function check_for_failed_notebooks(result::NamedTuple)
     errored_cells = findall(cell -> cell["errored"], state["cell_results"])
     isempty(errored_cells) && continue
     failed_notebooks[notebook_session.path] = [
-      (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"]["msg"]) for
+      (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"][:msg]) for
       id in sort(errored_cells; by = id -> findfirst(==(id), state["cell_order"]))
     ]
   end
@@ -32,7 +32,12 @@ function check_for_failed_notebooks(result::NamedTuple)
       println(io)
     end
     error_msgs = String(take!(io))
-    error("The following Pluto notebooks failed to run successfully: $(keys(failed_notebooks))\n\n", error_msgs)
+    error(
+      "The following Pluto notebook",
+      length(failed_notebooks) > 1 ? "s" : "",
+      " failed to run successfully: $(keys(failed_notebooks))\n\n",
+      error_msgs,
+    )
   end
 end
 
