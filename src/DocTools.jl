@@ -3,6 +3,7 @@ module DocTools
 using Dates
 using Documenter
 using Literate
+using LoggingExtras
 using Pkg
 using PlutoSliderServer
 using PlutoSliderServer.Pluto: is_pluto_notebook
@@ -86,30 +87,34 @@ function build_pluto(
       Pkg.activate(notebooks_dir)
       Pkg.instantiate()
     end
-    t = @elapsed if use_cache
-      PlutoSliderServer.export_directory(
-        notebooks_dir;
-        Export_create_index = false,
-        Export_output_dir = html_dir,
-        Export_cache_dir = joinpath(html_dir, "cache"),
-        Export_baked_state = false,
-        Export_baked_notebookfile = false,
-        Export_offer_binder = false,
-        Export_exclude = exclude_list,
-        on_ready = check_for_failed_notebooks,
-        notebook_paths,
-      )
-    else
-      PlutoSliderServer.export_directory(
-        notebooks_dir;
-        Export_create_index = false,
-        Export_output_dir = html_dir,
-        Export_exclude = exclude_list,
-        on_ready = check_for_failed_notebooks,
-        notebook_paths,
-      )
+    with_logger(
+      EarlyFilteredLogger(log -> log._module !== PlutoSliderServer.Pluto.ExpressionExplorer, current_logger()),
+    ) do
+      t = @elapsed if use_cache
+        PlutoSliderServer.export_directory(
+          notebooks_dir;
+          Export_create_index = false,
+          Export_output_dir = html_dir,
+          Export_cache_dir = joinpath(html_dir, "cache"),
+          Export_baked_state = false,
+          Export_baked_notebookfile = false,
+          Export_offer_binder = false,
+          Export_exclude = exclude_list,
+          on_ready = check_for_failed_notebooks,
+          notebook_paths,
+        )
+      else
+        PlutoSliderServer.export_directory(
+          notebooks_dir;
+          Export_create_index = false,
+          Export_output_dir = html_dir,
+          Export_exclude = exclude_list,
+          on_ready = check_for_failed_notebooks,
+          notebook_paths,
+        )
+      end
+      @info "Running the Pluto notebooks took $(t)s"
     end
-    @info "Running the Pluto notebooks took $(t)s"
     build_notebook_md(md_dir, html_dir, notebooks_dir)
   finally
     if activate_folder
