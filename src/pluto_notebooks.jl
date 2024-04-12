@@ -15,10 +15,18 @@ function check_for_failed_notebooks(result::NamedTuple)
     state = notebook_session.run.original_state
     errored_cells = findall(cell -> cell["errored"], state["cell_results"])
     isempty(errored_cells) && continue
-    failed_notebooks[notebook_session.path] = [
-      (input = state["cell_inputs"][id]["code"], output = state["cell_results"][id]["output"]["body"][:msg]) for
-      id in sort(errored_cells; by = id -> findfirst(==(id), state["cell_order"]))
-    ]
+    failed_notebooks[notebook_session.path] =
+      map(sort(errored_cells; by = id -> findfirst(==(id), state["cell_order"]))) do id
+        input = state["cell_inputs"][id]["code"]
+        body = state["cell_results"][id]["output"]["body"]
+        output =
+          haskey(body, :msg) ? body[:msg] :
+          haskey(body, "msg") ? body["msg"] :
+          error(
+            "the notebook structure changed and the cell output is not reachable, this might be due to a new Pluto version.",
+          )
+        (; input, output)
+      end
   end
   if !isempty(failed_notebooks)
     io = IOBuffer()
