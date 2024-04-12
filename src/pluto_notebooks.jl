@@ -22,9 +22,7 @@ function check_for_failed_notebooks(result::NamedTuple)
         output =
           haskey(body, :msg) ? body[:msg] :
           haskey(body, "msg") ? body["msg"] :
-          error(
-            "the notebook structure changed and the cell output is not reachable, this might be due to a new Pluto version.",
-          )
+          "DocTools error: the `msg` field could not be found in $(body)."
         (; input, output)
       end
   end
