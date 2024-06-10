@@ -78,7 +78,7 @@ rm_docs_build()
 
   @testset "Tooling" begin
     @test DocTools.has_parent("notebooks")("notebooks/folder/bar.jl")
-    @test DocTools.has_parent("workbench")("Kamchatka/workbench/bar.jl")
+    @test DocTools.has_parent("foo")("foo/workbench/bar.jl")
     @test !DocTools.has_parent("foo")("x/y/z.jl")
   end
 
