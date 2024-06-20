@@ -8,7 +8,8 @@ using Pkg
 using PlutoSliderServer
 using PlutoSliderServer.Pluto: is_pluto_notebook
 
-export build_pluto, build_literate, default_makedocs, is_mainCI, update_notebooks_versions, Traversal
+export build_pluto,
+  build_literate, default_makedocs, is_mainCI, update_notebooks_versions
 
 include("smart_filters.jl")
 include("pluto_notebooks.jl")

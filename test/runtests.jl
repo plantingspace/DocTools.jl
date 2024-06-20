@@ -15,7 +15,14 @@ function build_docs_with_options(;
   use_cache = false,
 )
   pluto_pages =
-    pluto ? build_pluto(DocTools, "pluto_notebooks"; recursive ? RECURSIVE : NON_RECURSIVE, smart_filter, use_cache) :
+    pluto ?
+    build_pluto(
+      DocTools,
+      "pluto_notebooks";
+      traversal = recursive ? DocTools.RECURSIVE : DocTools.NON_RECURSIVE,
+      smart_filter,
+      use_cache,
+    ) :
     String[]
 
   literate_pages =
