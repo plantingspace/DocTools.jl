@@ -8,7 +8,7 @@ using Pkg
 using PlutoSliderServer
 using PlutoSliderServer.Pluto: is_pluto_notebook
 
-export build_pluto, build_literate, default_makedocs, is_mainCI, update_notebooks_versions
+export build_pluto, build_literate, default_makedocs, is_mainCI, update_notebooks_versions, Traversal
 
 include("smart_filters.jl")
 include("pluto_notebooks.jl")
@@ -21,6 +21,13 @@ is_mainCI()::Bool =
   get(ENV, "CI", nothing) == "true" && !(haskey(ENV, "CI_MERGE_REQUEST_ID"))
 
 @deprecate is_masterCI is_mainCI
+
+@enum Traversal begin
+  NON_RECURSIVE = 0
+  RECURSIVE = 1
+  RECURSIVE_ON_CHANGE = 2
+end
+
 """
 Build notebooks using PlutoSliderServer and create Markdown file containing them
 in an iframe.
@@ -50,7 +57,7 @@ function build_pluto(
   md_dir::String = joinpath(src_dir, "notebooks"),
   html_dir::String = joinpath(src_dir, "assets", "notebooks"),
   exclude_list::AbstractVector{<:String} = String[],
-  recursive::Bool = true,
+  traversal::Traversal = NON_RECURSIVE,
   activate_folder::Bool = true,
   smart_filter::Bool = true,
   use_cache::Bool = false,
@@ -63,6 +70,7 @@ function build_pluto(
   mkpath(md_dir)
   mkpath(html_dir)
   # Paths to each notebook, relative to notebook directory.
+  recursive = traversal != NON_RECURSIVE
   notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive)
   modified_files = list_modified()
   modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), modified_files))
