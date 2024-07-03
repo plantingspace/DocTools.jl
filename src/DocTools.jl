@@ -22,6 +22,7 @@ is_mainCI()::Bool =
 
 @deprecate is_masterCI is_mainCI
 
+"The way to traverse the directories"
 @enum Traversal begin
   NON_RECURSIVE = 0
   RECURSIVE = 1
@@ -43,7 +44,7 @@ It returns the list of the paths of the created markdown pages.
 - `md_dir`: The output directory for the Markdown files (default is "docs/src/notebooks").
 - `html_dir`: The output directory for the HTML files (default is "docs/src/assets/notebooks").
 - `exclude_list`: Array of files to exclude from the rendering.
-- `recursive`: Also treats the subfolder (and return the same structure).
+- `traversal`: Defines the way to traverse the subfolders.
 - `activate_folder`: Activate the environment of the folder containing the notebooks.
 - `smart_filter`: Decide which notebooks to run based on changes (direct change or change `src/`).
 - `use_cache`: Use the caching function of `PlutoSliderServer`.
