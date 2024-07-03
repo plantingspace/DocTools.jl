@@ -71,7 +71,7 @@ function build_pluto(
   mkpath(md_dir)
   mkpath(html_dir)
   # Paths to each notebook, relative to notebook directory.
-  notebook_paths = get_pluto_notebook_paths(notebooks_dir; traversal != NON_RECURSIVE)
+  notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive = traversal != NON_RECURSIVE)
   modified_files = list_modified()
   modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), modified_files))
   pkg_modified = is_pkg_modified(modified_files)
