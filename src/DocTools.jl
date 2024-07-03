@@ -8,8 +8,7 @@ using Pkg
 using PlutoSliderServer
 using PlutoSliderServer.Pluto: is_pluto_notebook
 
-export build_pluto,
-  build_literate, default_makedocs, is_mainCI, update_notebooks_versions
+export build_pluto, build_literate, default_makedocs, is_mainCI, update_notebooks_versions
 
 include("smart_filters.jl")
 include("pluto_notebooks.jl")
@@ -71,11 +70,11 @@ function build_pluto(
   mkpath(md_dir)
   mkpath(html_dir)
   # Paths to each notebook, relative to notebook directory.
-  recursive = traversal != NON_RECURSIVE
-  notebook_paths = get_pluto_notebook_paths(notebooks_dir; recursive)
+  notebook_paths = get_pluto_notebook_paths(notebooks_dir; traversal != NON_RECURSIVE)
   modified_files = list_modified()
   modified_notebooks = map(x -> relpath(x, notebooks_dir), filter(startswith(notebooks_dir), modified_files))
   pkg_modified = is_pkg_modified(modified_files)
+
   if !is_mainCI() && smart_filter
     foreach(notebook_paths) do path
       # To not be excluded: the notebook must be modified or there was a change in the src package and the notebook depends on it.
