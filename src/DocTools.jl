@@ -23,11 +23,7 @@ is_mainCI()::Bool =
 @deprecate is_masterCI is_mainCI
 
 "The way to traverse the directories"
-@enum Traversal begin
-  NON_RECURSIVE = 0
-  RECURSIVE = 1
-  RECURSIVE_ON_CHANGE = 2
-end
+@enum Traversal NON_RECURSIVE RECURSIVE RECURSIVE_ON_CHANGE
 
 """
 Build notebooks using PlutoSliderServer and create Markdown file containing them
