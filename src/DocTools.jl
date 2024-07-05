@@ -22,8 +22,13 @@ is_mainCI()::Bool =
 
 @deprecate is_masterCI is_mainCI
 
-"The way to traverse the directories"
-@enum Traversal NON_RECURSIVE RECURSIVE RECURSIVE_ON_CHANGE
+"""
+The way to traverse the directories in order to evaluate the notebooks:
+- `NON_RECURSIVE`: Only in the given folder.
+- `RECURSIVE`: In the given folder and in subfolders.
+- `RECURSIVE_ON_CHANGE_IN_MR`: In the given folder and subfolders if they have been modified in the current MR.
+"""
+@enum Traversal NON_RECURSIVE RECURSIVE RECURSIVE_ON_CHANGE_IN_MR
 
 """
 Build notebooks using PlutoSliderServer and create Markdown file containing them
